@@ -1,24 +1,25 @@
 @echo off
 @setlocal EnableDelayedExpansion
 
+set WITH_CUDA=0
+
 :: Default values
 if NOT DEFINED MSVC_VERSION set MSVC_VERSION=14
-if NOT DEFINED WITH_NINJA set WITH_NINJA=0
-if NOT DEFINED CPU_ONLY set CPU_ONLY=0
-if NOT DEFINED WITH_CUDA set WITH_CUDA=1
-if NOT DEFINED CUDA_ARCH_NAME set CUDA_ARCH_NAME=Auto
-if NOT DEFINED CUDNN_ROOT set CUDNN_ROOT=C:\cudnn\v5.0
-if NOT DEFINED CMAKE_CONFIG set CMAKE_CONFIG=Release
-if NOT DEFINED USE_NCCL set USE_NCCL=0
-if NOT DEFINED CMAKE_BUILD_SHARED_LIBS set CMAKE_BUILD_SHARED_LIBS=0
-if NOT DEFINED PYTHON_VERSION set PYTHON_VERSION=3
-if NOT DEFINED BUILD_PYTHON set BUILD_PYTHON=1
-if NOT DEFINED BUILD_PYTHON_LAYER set BUILD_PYTHON_LAYER=1
-if NOT DEFINED BUILD_MATLAB set BUILD_MATLAB=0
-if NOT DEFINED PYTHON_EXE set PYTHON_EXE=python3
-if NOT DEFINED RUN_TESTS set RUN_TESTS=0
-if NOT DEFINED RUN_LINT set RUN_LINT=0
-if NOT DEFINED RUN_INSTALL set RUN_INSTALL=1
+set WITH_NINJA=0
+set CPU_ONLY=0
+set CUDA_ARCH_NAME=Auto
+set CUDNN_ROOT=C:\cudnn\v5.0
+set CMAKE_CONFIG=Release
+set USE_NCCL=0
+set CMAKE_BUILD_SHARED_LIBS=0
+set PYTHON_VERSION=3
+set BUILD_PYTHON=1
+set BUILD_PYTHON_LAYER=1
+set BUILD_MATLAB=0
+set PYTHON_EXE=python3
+set RUN_TESTS=0
+set RUN_LINT=0
+set RUN_INSTALL=1
 
 :: Set python 2.7 with conda as the default python
 if !PYTHON_VERSION! EQU 2 (
@@ -33,12 +34,12 @@ set PATH=!CONDA_ROOT!;!CONDA_ROOT!\Scripts;!CONDA_ROOT!\Library\bin;!PATH!
 :: Check that we have the right python version
 !PYTHON_EXE! --version
 :: Add the required channels
-conda config --add channels conda-forge
-conda config --add channels willyd
+REM conda config --add channels conda-forge
+REM conda config --add channels willyd
 :: Update conda
-conda update conda -y
+REM conda update conda -y
 :: Download other required packages
-conda install --yes cmake ninja numpy scipy protobuf==3.1.0 six scikit-image pyyaml pydotplus graphviz
+REM conda install --yes cmake ninja numpy scipy protobuf==3.1.0 six scikit-image pyyaml pydotplus graphviz
 
 if ERRORLEVEL 1  (
   echo ERROR: Conda update or install failed
@@ -47,23 +48,11 @@ if ERRORLEVEL 1  (
 
 :: Install cuda and disable tests if needed
 if !WITH_CUDA! == 1 (
-	call %~dp0\appveyor\appveyor_install_cuda.cmd
 	set CPU_ONLY=0
 	set RUN_TESTS=0
 	set USE_NCCL=1
 ) else (
 	set CPU_ONLY=1
-)
-
-:: Disable the tests in debug config
-if "%CMAKE_CONFIG%" == "Debug" (
-	echo Disabling tests on appveyor with config == %CMAKE_CONFIG%
-	set RUN_TESTS=0
-)
-
-:: Disable linting with python 3 until we find why the script fails
-if !PYTHON_VERSION! EQU 3 (
-	set RUN_LINT=0
 )
 
 :: Set the appropriate CMake generator
